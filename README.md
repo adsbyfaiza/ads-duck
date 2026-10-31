@@ -1,34 +1,64 @@
-# Ads Duck: the marketing truth agent
+# Duck: the truth agent inside ADMD 🦆
 
-**Problem:** ad platforms mark their own homework. Google and Meta often claim the same sale, and business owners make budget calls on inflated ROAS and CPA.
+**Ad platforms mark their own homework. Duck checks it.**
 
-**Duck** is a Google ADK multi-agent system that lives inside ADMD (Ads Duck Master Dashboard). It reads a workspace's real store orders and ad spend, shows what really happened, and proposes fixes that a human must approve.
+Built with **Google ADK + Gemini** at the GDG London AI DevCamp 2026 Agentic Hackathon.
 
-## Agents
-- **duck (root):** routes the question.
-- **data_agent:** fetches and summarises workspace performance.
-- **truth_checker:** claimed vs true CPA/ROAS per platform, over-claim %, blended-metric warnings, brand terms leaking into non-brand campaigns. All maths runs in Python tools, so the model never invents numbers.
-- **action_agent:** drafts fixes (budget shifts, brand negatives). **Dry run only** with a human approval gate. Nothing touches an ad account.
+▶️ **Demo video (real live Gemini answers):** https://youtu.be/iU12QE6p_Nc
 
-## Architecture
-```
-ADMD dashboard (duck button) -> Duck API (ADK, Cloud Run) -> ADMD read-only Duck API (demo workspaces only)
-```
-ADMD's code is private and not in this repo. Duck only reads **demo workspaces with made-up data**, enforced twice: an allowlist in ADMD and `DUCK_ALLOWED_WORKSPACES` here.
+---
 
-## Run
+## The problem
+
+Google, Meta and Klaviyo each claim credit for the same sale. Add up what the platforms report and you have sold more than your store actually took. Business owners then make budget decisions on inflated ROAS and CPA.
+
+## What Duck does
+
+Duck is a multi-agent analyst that lives inside **ADMD (Ads Duck Master Dashboard)**. A business owner presses the duck button, asks a question, and Duck compares what each ad platform claims with the real orders from the store.
+
+| Agent | Job |
+|---|---|
+| **Coordinator** | Routes each question to the right agent |
+| **Data agent** | Reads the workspace through a locked, read-only ADMD API |
+| **Truth checker** | Claimed vs real orders, claimed vs true CPA and ROAS, over-claim %, blended metrics flagged, brand terms leaking into non-brand campaigns |
+| **Action agent** | Proposes fixes as dry-run cards behind a human Approve gate. Nothing touches an ad account |
+
+**Design rule:** all maths runs in Python tools, never in the model. Gemini explains; code calculates. Duck cannot invent a number.
+
+## Real results from the live demo
+
+Fernhill Coffee Co. is a **sample store with made-up data**.
+
+| Platform | Claimed orders | Real orders | Over-claim |
+|---|---|---|---|
+| Meta | 116.59 | 84 | **+38.8%** |
+| Google Ads | 206.34 | 167 | **+23.6%** |
+| Klaviyo | 96 | 70 | **+37.1%** |
+
+- Meta's true CPA is **£22.86**, not the £16.47 it reports. True ROAS **1.30**, not 1.77.
+- **132 brand-name clicks (£53.31)** were paid for by non-brand campaigns.
+
+Every figure Duck quoted matched the code.
+
+## Safety
+
+- Demo workspaces only, enforced by a hard-coded allowlist. Real client workspaces return **403**.
+- API key header required on every call.
+- Approvals only through the button, once each. A typed "approve" is refused.
+- Sample data only. No personal data.
+
+## About this repo
+
+This repo holds **Duck's first standalone ADK build** (`ads_duck/`), written at the start of the hackathon. The **full integrated version** (Gemini model fallback, ADMD API, dashboard panel, tests) lives in ADMD's private repository, because that dashboard holds real client data. Happy to walk judges through it.
+
+### Run this version
+
 ```bash
 pip install -r requirements.txt
-cp .env.example ads_duck/.env   # fill in keys
-adk web          # dev UI
-adk api_server   # HTTP API for ADMD
+cp .env.example ads_duck/.env   # add your keys
+adk web
 ```
-Deploy: `adk deploy cloud_run --project YOUR_PROJECT --region europe-west2 ./ads_duck`
 
-## ADMD API contract (header `X-Duck-Key`)
-- `GET /api/duck/workspaces/:id/summary` -> `{workspace_id, name, currency, start, end, total_orders, total_revenue}`
-- `GET .../orders?start&end` -> `{orders: [{order_id, date, revenue, utm_source, utm_medium, utm_campaign, utm_term}]}`
-- `GET .../spend?start&end` -> `{rows: [{date, platform, campaign, campaign_type, spend, claimed_conversions, claimed_revenue}]}`
-- `GET .../search-terms?start&end` -> `{rows: [{campaign, campaign_type, search_term, clicks, cost, conversions}]}`
+---
 
-Built at GDG London AI DevCamp Agentic Hackathon, 31 Oct 2026.
+Built by **Faiza Khan**, founder of [Ads Duck](https://adsduck.co.uk).
