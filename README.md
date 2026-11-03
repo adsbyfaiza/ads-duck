@@ -1,5 +1,7 @@
 # Duck: the truth agent inside ADMD 🦆
 
+[![10th of 32](https://img.shields.io/badge/%F0%9F%8F%86_10th_of_32-GDG_London_AI_DevCamp_2026-F5B800?style=for-the-badge)](https://youtu.be/iU12QE6p_Nc)
+
 **Ad platforms mark their own homework. Duck checks it.**
 
 Built with **Google ADK + Gemini** at the GDG London AI DevCamp 2026 Agentic Hackathon.
